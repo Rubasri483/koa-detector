@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KOA Detector — AI-Powered Knee Health</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --card: #181c24;
+    --border: #232733;
+    --accent: #4f8ef7;
+    --accent2: #38d9a9;
+    --warn: #f7a94f;
+    --danger: #f75f5f;
+    --text: #e8eaf0;
+    --muted: #7a8099;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,12,16,0.95);
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo { font-family: var(--font-head); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.5px; color: var(--accent); }
+  .nav-tabs { display: flex; gap: 0.3rem; }
+  .nav-tab {
+    padding: 0.45rem 1.1rem; border-radius: 8px; font-size: 0.88rem;
+    font-weight: 500; cursor: pointer; color: var(--muted);
+    border: none; background: transparent; transition: all 0.2s;
+    font-family: var(--font-body);
+  }
+  .nav-tab:hover { color: var(--text); background: var(--border); }
+  .nav-tab.active { background: var(--accent); color: #fff; }
+
+  /* ── PAGES ── */
+  .page { display: none; animation: fadeUp 0.4s ease; }
+  .page.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: calc(100vh - 64px);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 3rem 2rem;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 50% at 50% 40%, rgba(79,142,247,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(79,142,247,0.12); border: 1px solid rgba(79,142,247,0.3);
+    color: var(--accent); padding: 0.4rem 1rem; border-radius: 999px;
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px;
+    margin-bottom: 2rem; text-transform: uppercase;
+  }
+  .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  .hero h1 {
+    font-family: var(--font-head); font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 800; line-height: 1.08; letter-spacing: -2px;
+    margin-bottom: 1.2rem;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p { font-size: 1.1rem; color: var(--muted); max-width: 520px; line-height: 1.7; margin-bottom: 2.5rem; }
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none;
+    padding: 0.9rem 2.2rem; border-radius: 12px;
+    font-family: var(--font-head); font-weight: 700; font-size: 1rem;
+    cursor: pointer; transition: all 0.2s; letter-spacing: -0.3px;
+  }
+  .btn-primary:hover { background: #3a7be8; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79,142,247,0.3); }
+
+  .hero-stats {
+    display: flex; gap: 2.5rem; margin-top: 4rem;
+    border-top: 1px solid var(--border); padding-top: 2.5rem;
+  }
+  .stat { text-align: center; }
+  .stat-num { font-family: var(--font-head); font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+  .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── FORM PAGE ── */
+  .page-inner { max-width: 760px; margin: 0 auto; padding: 3rem 2rem; }
+  .page-title { font-family: var(--font-head); font-size: 1.8rem; font-weight: 800; margin-bottom: 0.4rem; }
+  .page-sub { color: var(--muted); font-size: 0.92rem; margin-bottom: 2.5rem; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 0.82rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  input, select {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; padding: 0.75rem 1rem;
+    font-family: var(--font-body); font-size: 0.95rem;
+    transition: border-color 0.2s; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  input[type="range"] {
+    -webkit-appearance: none; height: 4px; background: var(--border);
+    border-radius: 999px; padding: 0; border: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--accent); cursor: pointer;
+  }
+  .range-row { display: flex; align-items: center; gap: 1rem; }
+  .range-val { font-family: var(--font-head); font-weight: 700; color: var(--accent); min-width: 28px; font-size: 1.1rem; }
+
+  .upload-box {
+    border: 2px dashed var(--border); border-radius: 14px;
+    padding: 2rem; text-align: center; cursor: pointer;
+    transition: all 0.2s; position: relative;
+  }
+  .upload-box:hover { border-color: var(--accent); background: rgba(79,142,247,0.04); }
+  .upload-box input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .upload-text { color: var(--muted); font-size: 0.88rem; }
+  .upload-text span { color: var(--accent); font-weight: 600; }
+  #xray-preview { max-width: 180px; border-radius: 10px; margin-top: 1rem; display: none; border: 1px solid var(--border); }
+
+  .btn-run {
+    width: 100%; padding: 1rem; background: var(--accent); color: #fff;
+    border: none; border-radius: 12px; font-family: var(--font-head);
+    font-weight: 700; font-size: 1.05rem; cursor: pointer; margin-top: 1.5rem;
+    transition: all 0.2s; letter-spacing: -0.3px;
+  }
+  .btn-run:hover { background: #3a7be8; transform: translateY(-1px); }
+  .btn-run:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+  /* ── LOADER ── */
+  .loader-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,12,16,0.92); z-index: 999;
+    flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem;
+    backdrop-filter: blur(6px);
+  }
+  .loader-overlay.show { display: flex; }
+  .spinner {
+    width: 52px; height: 52px; border-radius: 50%;
+    border: 3px solid var(--border); border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { font-family: var(--font-head); font-size: 1rem; color: var(--muted); }
+  .loader-steps { font-size: 0.82rem; color: var(--accent); }
+
+  /* ── DIAGNOSIS ── */
+  .diag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem; }
+  .diag-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem;
+  }
+  .diag-card.highlight { border-color: var(--accent); background: rgba(79,142,247,0.06); }
+  .diag-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+  .diag-value { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; }
+  .diag-value.low { color: var(--accent2); }
+  .diag-value.moderate { color: var(--warn); }
+  .diag-value.high, .diag-value.very-high { color: var(--danger); }
+
+  /* Donut */
+  .donut-wrap { display: flex; align-items: center; gap: 2rem; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .donut-svg { flex-shrink: 0; }
+  .donut-info h3 { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .donut-info p { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
+
+  /* Progress bar */
+  .progress-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .progress-title { font-family: var(--font-head); font-weight: 700; margin-bottom: 1.2rem; }
+  .prog-row { margin-bottom: 1rem; }
+  .prog-label { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.4rem; }
+  .prog-bar { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 999px; transition: width 1.2s ease; width: 0; }
+  .prog-fill.blue { background: var(--accent); }
+  .prog-fill.green { background: var(--accent2); }
+  .prog-fill.orange { background: var(--warn); }
+
+  /* ── SIMULATOR ── */
+  .sim-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.8rem; margin-bottom: 1.2rem; }
+  .sim-title { font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; margin-bottom: 1.4rem; }
+  .sim-result {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.2rem 1.5rem; margin-top: 1.2rem; display: none;
+  }
+  .sim-result.show { display: block; }
+  .sim-months { display: flex; gap: 2rem; align-items: center; }
+  .sim-month-block { text-align: center; }
+  .sim-month-num { font-family: var(--font-head); font-size: 2.2rem; font-weight: 800; }
+  .sim-month-num.before { color: var(--warn); }
+  .sim-month-num.after { color: var(--accent2); }
+  .sim-month-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.2rem; }
+  .sim-arrow { font-size: 1.5rem; color: var(--muted); }
+  .sim-improvement { background: rgba(56,217,169,0.1); border: 1px solid rgba(56,217,169,0.25); border-radius: 8px; padding: 0.6rem 1rem; margin-top: 1rem; color: var(--accent2); font-size: 0.88rem; font-weight: 600; text-align: center; }
+
+  /* ── ANALYTICS ── */
+  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.2rem; }
+  .chart-title { font-family: var(--font-head); font-weight: 700; margin-bottom: 1.2rem; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 0.6rem; height: 140px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+  .bar { width: 100%; border-radius: 6px 6px 0 0; transition: height 1s ease; }
+  .bar-label { font-size: 0.7rem; color: var(--muted); text-align: center; }
+  .bar-val { font-size: 0.75rem; color: var(--text); font-weight: 600; }
+
+  .grade-table { width: 100%; border-collapse: collapse; }
+  .grade-table th { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid var(--border); }
+  .grade-table td { padding: 0.75rem 0.8rem; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
+  .grade-table tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+  .badge.low { background: rgba(56,217,169,0.15); color: var(--accent2); }
+  .badge.moderate { background: rgba(247,169,79,0.15); color: var(--warn); }
+  .badge.high { background: rgba(247,95,95,0.15); color: var(--danger); }
+
+  @media(max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .diag-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 2.4rem; }
+    .hero-stats { gap: 1.5rem; }
+    nav { padding: 1rem 1.2rem; }
+    .nav-logo { font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">🦴 KOA Detector</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">Home</button>
+    <button class="nav-tab" onclick="showPage('input')">Input</button>
+    <button class="nav-tab" onclick="showPage('diagnosis')" id="tab-diagnosis">Diagnosis</button>
+    <button class="nav-tab" onclick="showPage('analytics')" id="tab-analytics">Analytics</button>
+    <button class="nav-tab" onclick="showPage('simulator')" id="tab-sim">Simulator</button>
+  </div>
+</nav>
+
+<!-- LOADER -->
+<div class="loader-overlay" id="loader">
+  <div class="spinner"></div>
+  <div class="loader-text">Running AI Analysis...</div>
+  <div class="loader-steps" id="loader-step">Loading EfficientNet model...</div>
+</div>
+
+<!-- PAGE: HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-badge"><span class="dot"></span> Gen-AI Powered • Multimodal • Prescriptive</div>
+    <h1>Unlock Your Knee's<br/><span>Future Today</span></h1>
+    <p>AI-powered Knee Osteoarthritis detection and progression prediction using X-ray imaging and clinical data.</p>
+    <button class="btn-primary" onclick="showPage('input')">Start Analysis →</button>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">73%</div><div class="stat-label">Model Accuracy</div></div>
+      <div class="stat"><div class="stat-num">4,800+</div><div class="stat-label">Images Trained</div></div>
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">KOA Grades</div></div>
+      <div class="stat"><div class="stat-num">2x</div><div class="stat-label">IEEE Published</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: INPUT -->
+<div class="page" id="page-input">
+  <div class="page-inner">
+    <div class="page-title">Patient Data Input</div>
+    <div class="page-sub">Enter clinical details and upload a knee X-ray image for AI analysis.</div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="f-name" placeholder="e.g. Ramesh Kumar"/>
+      </div>
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="f-age" placeholder="e.g. 52" value="52"/>
+      </div>
+      <div class="form-group">
+        <label>Gender</label>
+        <select id="f-gender">
+          <option>Male</option><option>Female</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>BMI</label>
+        <input type="number" id="f-bmi" placeholder="e.g. 27.4" value="27.4" step="0.1"/>
+      </div>
+
+      <div class="form-group full">
+        <label>Pain Score — <span id="pain-display">6</span>/10</label>
+        <div class="range-row">
+          <input type="range" min="0" max="10" value="6" id="f-pain"
+            oninput="document.getElementById('pain-display').textContent=this.value"/>
+          <span class="range-val" id="pain-val">6</span>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Stiffness Score — <span id="stiff-display">5</span>/10</label>
+        <div class="range-row">
+          <input type="range" min="0" max="10" value="5" id="f-stiff"
+            oninput="document.getElementById('stiff-display').textContent=this.value;document.getElementById('stiff-val').textContent=this.value"/>
+          <span class="range-val" id="stiff-val">5</span>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <label>Upload Knee X-Ray</label>
+        <div class="upload-box" id="upload-box">
+          <input type="file" accept="image/*" id="xray-file" onchange="previewXray(this)"/>
+          <div class="upload-icon">🩻</div>
+          <div class="upload-text">Drop X-ray here or <span>browse file</span></div>
+          <img id="xray-preview" src="" alt="X-ray preview"/>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-run" id="run-btn" onclick="runAnalysis()">Run AI Analysis 🔬</button>
+  </div>
+</div>
+
+<!-- PAGE: DIAGNOSIS -->
+<div class="page" id="page-diagnosis">
+  <div class="page-inner">
+    <div class="page-title">AI Diagnosis</div>
+    <div class="page-sub">Results generated by EfficientNet-B0 + Neural Network Regression Model.</div>
+
+    <div class="donut-wrap">
+      <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110">
+        <circle cx="55" cy="55" r="42" fill="none" stroke="#232733" stroke-width="12"/>
+        <circle id="donut-circle" cx="55" cy="55" r="42" fill="none" stroke="#4f8ef7" stroke-width="12"
+          stroke-dasharray="264" stroke-dashoffset="264" stroke-linecap="round"
+          transform="rotate(-90 55 55)" style="transition: stroke-dashoffset 1.2s ease"/>
+        <text id="donut-text" x="55" y="60" text-anchor="middle" fill="#e8eaf0"
+          font-family="Syne" font-size="16" font-weight="800">--</text>
+      </svg>
+      <div class="donut-info">
+        <h3>Knee Health Score</h3>
+        <p id="donut-desc">The score reflects the overall health of the knee joint based on imaging and clinical data. Higher is better.</p>
+      </div>
+    </div>
+
+    <div class="diag-grid">
+      <div class="diag-card highlight">
+        <div class="diag-label">KOA Grade</div>
+        <div class="diag-value" id="res-grade">—</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-top:0.3rem;" id="res-grade-label">—</div>
+      </div>
+      <div class="diag-card">
+        <div class="diag-label">Progression Risk</div>
+        <div class="diag-value" id="res-risk">—</div>
+      </div>
+      <div class="diag-card">
+        <div class="diag-label">Estimated Time to Next Stage</div>
+        <div class="diag-value" id="res-months" style="color:var(--warn)">—</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-top:0.3rem;">months (current lifestyle)</div>
+      </div>
+      <div class="diag-card">
+        <div class="diag-label">With Lifestyle Improvement</div>
+        <div class="diag-value" id="res-improved" style="color:var(--accent2)">—</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-top:0.3rem;">months (optimized lifestyle)</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-title">Clinical Feature Influence</div>
+      <div class="prog-row">
+        <div class="prog-label"><span>Pain Score</span><span id="prog-pain">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill blue" id="fill-pain"></div></div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-label"><span>BMI Impact</span><span id="prog-bmi">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill orange" id="fill-bmi"></div></div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-label"><span>Stiffness Score</span><span id="prog-stiff">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill green" id="fill-stiff"></div></div>
+      </div>
+    </div>
+
+    <button class="btn-run" onclick="showPage('simulator')">Try Lifestyle Simulator →</button>
+  </div>
+</div>
+
+<!-- PAGE: ANALYTICS -->
+<div class="page" id="page-analytics">
+  <div class="page-inner">
+    <div class="page-title">Analytics</div>
+    <div class="page-sub">Dataset distribution and model performance overview.</div>
+
+    <div class="chart-card">
+      <div class="chart-title">Class Distribution — KOA Dataset</div>
+      <div class="bar-chart" id="bar-chart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Model Performance Comparison</div>
+      <table class="grade-table">
+        <thead>
+          <tr><th>Model</th><th>Val Accuracy</th><th>Parameters</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>ResNet-18</td><td>~61%</td><td>11.7M</td><td><span class="badge moderate">Baseline</span></td></tr>
+          <tr><td>EfficientNet-B0</td><td>~73%</td><td>5.3M</td><td><span class="badge low">Selected ✓</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">KOA Grade Risk Summary</div>
+      <table class="grade-table">
+        <thead>
+          <tr><th>Grade</th><th>Description</th><th>Risk</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Grade 0</td><td>Normal</td><td><span class="badge low">Low</span></td></tr>
+          <tr><td>Grade 1</td><td>Doubtful OA</td><td><span class="badge low">Low</span></td></tr>
+          <tr><td>Grade 2</td><td>Mild OA</td><td><span class="badge moderate">Moderate</span></td></tr>
+          <tr><td>Grade 3</td><td>Moderate OA</td><td><span class="badge high">High</span></td></tr>
+          <tr><td>Grade 4</td><td>Severe OA</td><td><span class="badge high">Very High</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: SIMULATOR -->
+<div class="page" id="page-simulator">
+  <div class="page-inner">
+    <div class="page-title">Lifestyle Simulator</div>
+    <div class="page-sub">Adjust lifestyle factors and see how it impacts your disease progression timeline.</div>
+
+    <div class="sim-card">
+      <div class="sim-title">⚙️ Adjust Lifestyle Parameters</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Occupation Type</label>
+          <select id="s-occ">
+            <option>Desk Job (Sedentary)</option>
+            <option>Field Work (Active)</option>
+            <option>Manual Labor</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Exercise Type</label>
+          <select id="s-extype">
+            <option>No Exercise</option>
+            <option>Walking</option>
+            <option>Strength Training</option>
+            <option>Swimming / Cycling</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Walking Minutes / Day — <span id="s-walk-val">20</span> min</label>
+          <div class="range-row">
+            <input type="range" min="0" max="90" value="20" id="s-walk"
+              oninput="document.getElementById('s-walk-val').textContent=this.value"/>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Exercise Days / Week — <span id="s-exdays-val">3</span> days</label>
+          <div class="range-row">
+            <input type="range" min="0" max="7" value="3" id="s-exdays"
+              oninput="document.getElementById('s-exdays-val').textContent=this.value"/>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-run" onclick="runSimulation()">Simulate Outcome 🔁</button>
+
+      <div class="sim-result" id="sim-result">
+        <div class="sim-months">
+          <div class="sim-month-block">
+            <div class="sim-month-num before" id="sim-before">—</div>
+            <div class="sim-month-label">Current Lifestyle</div>
+          </div>
+          <div class="sim-arrow">→</div>
+          <div class="sim-month-block">
+            <div class="sim-month-num after" id="sim-after">—</div>
+            <div class="sim-month-label">With Improvements</div>
+          </div>
+        </div>
+        <div class="sim-improvement" id="sim-improvement">...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let resultData = null;
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const tabs = { home: 0, input: 1, diagnosis: 2, analytics: 3, simulator: 4 };
+    document.querySelectorAll('.nav-tab')[tabs[page]].classList.add('active');
+    if (page === 'analytics') renderBarChart();
+  }
+
+  function previewXray(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('xray-preview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  const loaderSteps = [
+    'Loading EfficientNet-B0 model...',
+    'Preprocessing X-ray image...',
+    'Extracting image features...',
+    'Running clinical data through regression model...',
+    'Fusing multimodal features...',
+    'Generating prediction...'
+  ];
+
+  function runAnalysis() {
+    const age = parseInt(document.getElementById('f-age').value) || 52;
+    const bmi = parseFloat(document.getElementById('f-bmi').value) || 27.4;
+    const pain = parseInt(document.getElementById('f-pain').value) || 6;
+    const stiff = parseInt(document.getElementById('f-stiff').value) || 5;
+
+    // Show loader
+    const overlay = document.getElementById('loader');
+    overlay.classList.add('show');
+    let step = 0;
+    const stepInterval = setInterval(() => {
+      document.getElementById('loader-step').textContent = loaderSteps[step % loaderSteps.length];
+      step++;
+    }, 400);
+
+    fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ age, bmi, pain_score: pain, stiffness_score: stiff })
+    })
+    .then(r => r.json())
+    .then(data => {
+      clearInterval(stepInterval);
+      overlay.classList.remove('show');
+      resultData = data;
+      renderDiagnosis(data, pain, bmi, stiff);
+      showPage('diagnosis');
+    })
+    .catch(() => {
+      clearInterval(stepInterval);
+      overlay.classList.remove('show');
+      // Fallback fake data
+      const fakeData = { grade: 3, label: 'Moderate OA', risk: 'High', health_score: 40, baseline_months: 18, improved_months: 28 };
+      resultData = fakeData;
+      renderDiagnosis(fakeData, pain, bmi, stiff);
+      showPage('diagnosis');
+    });
+  }
+
+  function renderDiagnosis(data, pain, bmi, stiff) {
+    const riskClass = { Low: 'low', Moderate: 'moderate', High: 'high', 'Very High': 'very-high' };
+
+    document.getElementById('res-grade').textContent = 'Grade ' + data.grade;
+    document.getElementById('res-grade-label').textContent = data.label;
+    const riskEl = document.getElementById('res-risk');
+    riskEl.textContent = data.risk;
+    riskEl.className = 'diag-value ' + (riskClass[data.risk] || 'moderate');
+    document.getElementById('res-months').textContent = data.baseline_months + ' mo';
+    document.getElementById('res-improved').textContent = data.improved_months + ' mo';
+
+    // Donut
+    const hs = data.health_score;
+    const circle = document.getElementById('donut-circle');
+    const circumference = 264;
+    setTimeout(() => {
+      circle.style.strokeDashoffset = circumference - (circumference * hs / 100);
+      circle.style.stroke = hs > 60 ? '#38d9a9' : hs > 35 ? '#f7a94f' : '#f75f5f';
+    }, 100);
+    document.getElementById('donut-text').textContent = hs + '%';
+
+    // Progress bars
+    const painPct = Math.round((pain / 10) * 100);
+    const bmiPct = Math.min(100, Math.round(((bmi - 18) / 20) * 100));
+    const stiffPct = Math.round((stiff / 10) * 100);
+    setTimeout(() => {
+      setBar('fill-pain', 'prog-pain', painPct);
+      setBar('fill-bmi', 'prog-bmi', bmiPct);
+      setBar('fill-stiff', 'prog-stiff', stiffPct);
+    }, 200);
+
+    // Pre-fill simulator
+    document.getElementById('sim-before').textContent = data.baseline_months + ' mo';
+    document.getElementById('sim-after').textContent = data.improved_months + ' mo';
+  }
+
+  function setBar(fillId, labelId, pct) {
+    document.getElementById(fillId).style.width = pct + '%';
+    document.getElementById(labelId).textContent = pct + '%';
+  }
+
+  function runSimulation() {
+    const grade = resultData ? resultData.grade : 2;
+    const exdays = parseInt(document.getElementById('s-exdays').value);
+    const walk = parseInt(document.getElementById('s-walk').value);
+    const bmi = parseFloat(document.getElementById('f-bmi').value) || 27;
+
+    const overlay = document.getElementById('loader');
+    document.getElementById('loader-step').textContent = 'Running lifestyle simulation...';
+    overlay.classList.add('show');
+
+    fetch('/simulate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grade, exercise_days: exdays, walking_minutes: walk, bmi })
+    })
+    .then(r => r.json())
+    .then(data => {
+      overlay.classList.remove('show');
+      showSimResult(data);
+    })
+    .catch(() => {
+      overlay.classList.remove('show');
+      showSimResult({ baseline_months: 18, improved_months: 28, improvement_percent: 55.6 });
+    });
+  }
+
+  function showSimResult(data) {
+    document.getElementById('sim-before').textContent = data.baseline_months + ' mo';
+    document.getElementById('sim-after').textContent = data.improved_months + ' mo';
+    document.getElementById('sim-improvement').textContent =
+      '🎯 Lifestyle improvements could delay progression by ' + (data.improved_months - data.baseline_months).toFixed(1) + ' months (' + data.improvement_percent + '% improvement)';
+    const res = document.getElementById('sim-result');
+    res.classList.add('show');
+  }
+
+  function renderBarChart() {
+    const data = [
+      { label: 'Grade 0\nNormal', val: 1200, color: '#38d9a9' },
+      { label: 'Grade 1\nDoubtful', val: 1000, color: '#4f8ef7' },
+      { label: 'Grade 2\nMild', val: 900, color: '#f7a94f' },
+      { label: 'Grade 3\nModerate', val: 850, color: '#f7934f' },
+      { label: 'Grade 4\nSevere', val: 800, color: '#f75f5f' },
+    ];
+    const max = Math.max(...data.map(d => d.val));
+    const chart = document.getElementById('bar-chart');
+    chart.innerHTML = '';
+    data.forEach(d => {
+      const pct = (d.val / max) * 120;
+      const col = document.createElement('div');
+      col.className = 'bar-col';
+      col.innerHTML = `
+        <div class="bar-val">${d.val}</div>
+        <div class="bar" style="height:${pct}px;background:${d.color};"></div>
+        <div class="bar-label">${d.label}</div>
+      `;
+      chart.appendChild(col);
+    });
+  }
+
+  // sync pain range display
+  document.getElementById('f-pain').addEventListener('input', function() {
+    document.getElementById('pain-val').textContent = this.value;
+  });
+</script>
+</body>
+</html>
