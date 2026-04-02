@@ -6,14 +6,14 @@ app = Flask(__name__)
 
 # Fake AI prediction logic (looks realistic)
 def predict_koa_grade(age, bmi, pain_score, stiffness_score):
-    score = (pain_score * 0.4) + (stiffness_score * 0.3) + ((bmi - 18) * 0.15) + ((age - 30) * 0.08)
-    if score < 10:
+    score = (pain_score * 4) + (stiffness_score * 3) + ((bmi - 18) * 1.5) + ((age - 30) * 0.8)
+    if score < 20:
         return 0, "Normal", "Low", 92
-    elif score < 20:
-        return 1, "Doubtful OA", "Low", 78
-    elif score < 30:
-        return 2, "Mild OA", "Moderate", 58
     elif score < 40:
+        return 1, "Doubtful OA", "Low", 78
+    elif score < 60:
+        return 2, "Mild OA", "Moderate", 58
+    elif score < 80:
         return 3, "Moderate OA", "High", 40
     else:
         return 4, "Severe OA", "Very High", 22
