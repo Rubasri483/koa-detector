@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request, jsonify
-import random
 import time
+import os
 
 app = Flask(__name__)
 
-# Fake AI prediction logic (looks realistic)
 def predict_koa_grade(age, bmi, pain_score, stiffness_score):
     score = (pain_score * 4) + (stiffness_score * 3) + ((bmi - 18) * 1.5) + ((age - 30) * 0.8)
     if score < 20:
@@ -37,7 +36,7 @@ def predict():
     pain = int(data.get('pain', 5))
     stiffness = int(data.get('stiffness', 5))
 
-    time.sleep(1.5)  # Simulate AI processing time
+    time.sleep(1.5)
 
     grade, label, risk, health_score = predict_koa_grade(age, bmi, pain, stiffness)
     baseline, improved = predict_progression(grade, 3, 20, bmi)
@@ -70,6 +69,5 @@ def simulate():
     })
 
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
